@@ -1,0 +1,75 @@
+page-game {
+    $color : #776e65;
+    .page-content {
+        background: #faf8ef;
+        color : $color;
+        .container {
+            margin-left: auto;
+            margin-right: auto;
+            margin-top: 10px;
+            @media screen and (min-height:500px) and (max-height:599px) {
+                margin-top : 50px;
+            }
+            @media screen and (min-height:600px) and (max-height:699px) {
+                margin-top : 80px;
+            }
+            @media screen and (min-height:700px) and (max-height:1023px) {
+                margin-top : 100px;
+            }
+            @media screen and (min-height:1024px) {
+                margin-top : 150px;
+            }
+            .header {
+                display: flex;
+                .title {
+                    font-size: 45px;
+                    font-weight: bold;
+                    flex-grow: 2;
+                }
+                .info-group {
+                    display: flex;
+                    flex-grow: 1;
+                    justify-content: flex-end;
+                    .score {
+                        background: #bbada0;
+                        border-radius: 3px;
+                        padding : 5px 15px 0;
+                        &:first-child {
+                            margin-right: 5px;
+                        }
+                        .txt {
+                            font-size: 14px;
+                            color : #eee4da;
+                            margin-bottom: 5px;
+                        }
+                        .num-div {
+                            font-size: 16px;
+                            line-height: 16px;
+                            font-weight: bold;
+                            color: white;
+                            text-align: center;
+                            position: relative;
+                            .tip {
+                                position: absolute;
+                                top : 0;
+                                color : $color;
+                                opacity: 0.7;
+                                transition: top 0.3s linear, opacity 0.3s ease-in;
+                            }
+                        }
+                    }
+                }
+            }
+            .header-info {
+                display: flex;
+                .info {
+                    font-size: 14px;
+                    flex-grow: 3;
+                    padding-top: 8px; 
+                }
+
+            }
+        }
+    }
+}
+
