@@ -1,6 +1,7 @@
 import { Component, ViewChild, ElementRef, Renderer2 } from '@angular/core';
 import { IonicPage, NavController, NavParams } from 'ionic-angular';
 import { Storage } from '@ionic/storage';
+import { Vibration } from '@ionic-native/vibration';
 
 /**
  * Generated class for the GamePage page.
@@ -41,7 +42,8 @@ export class GamePage {
   maxScore:number = 0;
   tipStr:string = '';
 
-  constructor(public navCtrl: NavController, public navParams: NavParams, private renderer:Renderer2, private storage:Storage) {
+  constructor(public navCtrl: NavController, public navParams: NavParams, private renderer:Renderer2, private storage:Storage,
+    private vibration: Vibration) {
   }
 
   ionViewDidLoad() {
@@ -60,9 +62,10 @@ export class GamePage {
     this.gameCtx = this.gameCanvas.nativeElement.getContext('2d');
     this.init();
     this.game_status = true;
-    this.storage.get('num_array').then(arr => {
-      if(arr) {
-        this.num_array = arr;
+    this.storage.get('num_data').then(data => {
+      if(data) {
+        this.num_array = data['num_array'];
+        this.score = data['score'];
         this.drawGamePanel();
       } else {
         this.startGame();
@@ -231,7 +234,10 @@ export class GamePage {
       x : col*(this.box_size+this.box_space),
       y : row*(this.box_size+this.box_space)
     });
-    this.storage.set('num_array',this.num_array);
+    this.storage.set('num_data',{
+      'num_array' : this.num_array,
+      'score' : this.score
+    });
   }
 
   zoomBox():void {
@@ -329,7 +335,10 @@ export class GamePage {
       }
     }
     if(this.move_box.length>0) {
-      this.storage.set('num_array',this.num_array);
+      this.storage.set('num_data',{
+        'num_array' : this.num_array,
+        'score' : this.score
+      });
       moveBox_animate();
     }
   }
@@ -676,11 +685,15 @@ export class GamePage {
         if(this.isMoveRight()) {
           this.moveRight();
           this.gameNextStep();
-        } 
+        } else {
+          this.vibration.vibrate(100);
+        }
       } else {
         if(this.isMoveLeft()) {
           this.moveLeft();
           this.gameNextStep();
+        } else {
+          this.vibration.vibrate(100);
         }
       }
     } else {
@@ -688,12 +701,16 @@ export class GamePage {
         if(this.isMoveBottom()) {
           this.moveBottom();
           this.gameNextStep();
+        } else {
+          this.vibration.vibrate(100);
         }
       } else {
         if(this.isMoveTop()) {
           this.moveTop();
           this.gameNextStep();
-        } 
+        } else {
+          this.vibration.vibrate(100);
+        }
       }
     }
   }
@@ -750,6 +767,7 @@ export class GamePage {
   }
 
   newGame():void {
+    this.score = 0;
     this.storage.clear().then(()=>this.startGame());
   }
 
