@@ -1,5 +1,5 @@
 import { Component, ViewChild, ElementRef, Renderer2 } from '@angular/core';
-import { IonicPage, NavController, NavParams } from 'ionic-angular';
+import { IonicPage, NavController, NavParams, AlertController, Events } from 'ionic-angular';
 import { Storage } from '@ionic/storage';
 import { Vibration } from '@ionic-native/vibration';
 
@@ -41,9 +41,11 @@ export class GamePage {
   score:number = 0;
   maxScore:number = 0;
   tipStr:string = '';
+  target_score:number = 2048;
+  vibration_status:boolean = true;
 
   constructor(public navCtrl: NavController, public navParams: NavParams, private renderer:Renderer2, private storage:Storage,
-    private vibration: Vibration) {
+    private vibration: Vibration, private alertCtrl:AlertController, private events:Events) {
   }
 
   ionViewDidLoad() {
@@ -62,14 +64,26 @@ export class GamePage {
     this.gameCtx = this.gameCanvas.nativeElement.getContext('2d');
     this.init();
     this.game_status = true;
+    this.storage.get('vibration_status').then(data=>{
+      this.vibration_status = data;
+    });
     this.storage.get('num_data').then(data => {
       if(data) {
-        this.num_array = data['num_array'];
-        this.score = data['score'];
+        this.num_array = data['num_array'] || [];
+        this.score = data['score'] || 0;
+        this.target_score = data['target_score'] || 2048;
         this.drawGamePanel();
       } else {
         this.startGame();
       }
+    });
+  }
+
+  saveNumData():void {
+    this.storage.set('num_data',{
+      'num_array' : this.num_array,
+      'score' : this.score,
+      'target_score' : this.target_score
     });
   }
 
@@ -227,16 +241,13 @@ export class GamePage {
     } while(this.num_array[row][col]>0);
     var num = Math.random()<0.9 ? 2 : 4;
     this.num_array[row][col] = num;
+    this.saveNumData();
     this.zoom_box.push({
       complete : 0,
       size : 10,
       color : this.getColor(num),
       x : col*(this.box_size+this.box_space),
       y : row*(this.box_size+this.box_space)
-    });
-    this.storage.set('num_data',{
-      'num_array' : this.num_array,
-      'score' : this.score
     });
   }
 
@@ -329,16 +340,11 @@ export class GamePage {
         this.drawGamePanel();
         this.genNum();
         this.zoomBox();
-        //this.storage.set('num_array', this.num_array);
       } else {
         this.move_flag = requestAnimationFrame(moveBox_animate);
       }
     }
     if(this.move_box.length>0) {
-      this.storage.set('num_data',{
-        'num_array' : this.num_array,
-        'score' : this.score
-      });
       moveBox_animate();
     }
   }
@@ -625,6 +631,7 @@ export class GamePage {
     var num = num_target+origion;
     this.num_array[row_target][col_target] = num;
     this.num_array[row][col] = 0;
+    this.saveNumData();
     var speed = Math.abs((col_target*(this.box_size+this.box_space)-col*(this.box_size+this.box_space)))/4;
     if(direction=='top' || direction=='bottom') {
       speed = Math.abs((row_target*(this.box_size+this.box_space)-row*(this.box_size+this.box_space)))/4;
@@ -646,6 +653,7 @@ export class GamePage {
     //console.log(num);
     if(num>0) {
       this.score+=num;
+      this.saveNumData();
       this.tipStr = '+'+num;
       if(this.score>this.maxScore) {
         this.maxScore = this.score;
@@ -661,13 +669,13 @@ export class GamePage {
   }
 
   touchstartEvent(e):void {
-    e.preventDefault();
+    //e.preventDefault();
     this.startx = e.touches[0].pageX;
 		this.starty = e.touches[0].pageY;
   }
 
   touchendEvent(e):void {
-    e.preventDefault();
+    //e.preventDefault();
     this.endx = e.changedTouches[0].pageX;
     this.endy = e.changedTouches[0].pageY;
 
@@ -686,14 +694,18 @@ export class GamePage {
           this.moveRight();
           this.gameNextStep();
         } else {
-          this.vibration.vibrate(100);
+          if(this.vibration_status) {
+            this.vibration.vibrate(100);
+          }
         }
       } else {
         if(this.isMoveLeft()) {
           this.moveLeft();
           this.gameNextStep();
         } else {
-          this.vibration.vibrate(100);
+          if(this.vibration_status) {
+            this.vibration.vibrate(100);
+          }
         }
       }
     } else {
@@ -702,14 +714,18 @@ export class GamePage {
           this.moveBottom();
           this.gameNextStep();
         } else {
-          this.vibration.vibrate(100);
+          if(this.vibration_status) {
+            this.vibration.vibrate(100);
+          }
         }
       } else {
         if(this.isMoveTop()) {
           this.moveTop();
           this.gameNextStep();
         } else {
-          this.vibration.vibrate(100);
+          if(this.vibration_status) {
+            this.vibration.vibrate(100);
+          }
         }
       }
     }
@@ -719,19 +735,26 @@ export class GamePage {
     setTimeout(() => {
       if(!(this.isMoveLeft() || this.isMoveTop() || this.isMoveRight() || this.isMoveBottom())) {
         this.game_status = false;
-        this.showMessage('游戏结束!');
-        /*
-        that.$gameMessageContent.text("游戏结束!");
-        that.storageGameClear();
-        setTimeout(function(){
-          that.$gameMessage.show();
-        }, 600);
-        */
+        this.score = 0;
+        this.num_array = [];
+        this.target_score = 2048;
+        this.saveNumData();
+        this.alertCtrl.create({
+          title : '消息',
+          subTitle : '游戏结束',
+          buttons : [{
+            text : '确定',
+            role : 'cancel',
+            handler : ()=>{
+              this.startGame();
+            }
+          }]
+        }).present();
       } else {
         var win = false;
         for(let i=0;i<4;i++) {
           for(let j=0;j<4;j++) {
-            if(this.num_array[i][j]==2048) {
+            if(this.num_array[i][j]==this.target_score) {
               win = true;
               break;
             }
@@ -741,34 +764,41 @@ export class GamePage {
           }
         }
         if(win) {
-          this.game_status = false;
-          this.showMessage('你赢了!');
-          /*
-          that.$gameMessageContent.text("你赢了!");
-          that.storageGameClear();
-          setTimeout(function(){
-            that.$gameMessage.show();
-          }, 600);
-          */
+          var history_score = this.target_score;
+          this.target_score = this.target_score*2;
+          this.saveNumData();
+          this.storage.get('history_scores').then(data=>{
+            if(data) {
+              var numObj = data.find(n=>n['num']==history_score);
+              if(numObj) {
+                numObj['cnt'] = numObj['cnt'] + 1;
+              } else {
+                data.push({'num':history_score,'cnt':1});
+              }
+            } else {
+             data = [{'num':history_score,'cnt':1}]; 
+            }
+            this.storage.set('history_scores',data).then(()=>this.events.publish('historyRefresh'));
+          });
+          this.alertCtrl.create({
+            title : '消息',
+            subTitle : '你赢了!您将进入'+this.target_score,
+            buttons : [{
+              text : '确定',
+              role : 'cancel'
+            }]
+          }).present();
         }
       }	
-    },200);
-  }
-
-  showMessage(content:string):void {
-    this.gameCtx.globalAlpha = 0.75;
-    this.gameCtx.fillStyle = '#EEE4DA';
-    this.gameCtx.fillRect(0,0,this.gameCanvas.nativeElement.width,this.gameCanvas.nativeElement.height);
-    this.gameCtx.fillStyle = '#776e65';
-    this.gameCtx.font = '45px Arial';
-    this.gameCtx.textAlign = 'center';
-    this.gameCtx.textBaseline = 'middle';
-    this.gameCtx.fillText(content,this.gameCanvas.nativeElement.width/2,this.gameCanvas.nativeElement.height/2);
+    },350);
   }
 
   newGame():void {
     this.score = 0;
-    this.storage.clear().then(()=>this.startGame());
+    this.num_array = [];
+    this.target_score = 2048;
+    this.saveNumData();
+    this.startGame();
   }
 
 }

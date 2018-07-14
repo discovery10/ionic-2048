@@ -6,4 +6,16 @@
 
 <ion-content padding>
   <button ion-button block (click)="openPage()">开始游戏</button>
+  <ion-list>
+    <ion-list-header>设置</ion-list-header>
+    <ion-item>
+      <span item-start>振动提示</span>
+      <ion-toggle [(ngModel)]="vibration_status" (ionChange)="changeEvent()"></ion-toggle>
+    </ion-item>
+    <ion-list-header *ngIf="history_scores.length > 0">历史记录</ion-list-header>
+    <ion-item *ngFor="let s of history_scores">
+      <span item-start>{{s.num}}</span>
+      <span item-end>{{s.cnt}}次</span>
+    </ion-item>
+  </ion-list>
 </ion-content>

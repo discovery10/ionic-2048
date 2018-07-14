@@ -4,11 +4,12 @@
   </ion-navbar>
 </ion-header>
 
-<ion-content class="page-content">
+<ion-content class="page-content" (touchmove)="$event.preventDefault()"
+(touchstart)="touchstartEvent($event)" (touchend)="touchendEvent($event)">
   <div class="container" #gameContainer>
     <div class="header">
       <div class="title">
-        2048
+        {{target_score}}
       </div>
       <div class="info-group">
         <div class="score">
@@ -21,9 +22,9 @@
       </div>
     </div>
     <div class="header-info">
-      <div class="info">移动数字直到出到2048</div>
+      <div class="info">移动数字直到出到{{target_score}}</div>
       <button ion-button small color="gamecolor" (click)="newGame()">新游戏</button>
     </div>
-    <canvas class="gameCanvas" #gameCanvas (touchstart)="touchstartEvent($event)" (touchend)="touchendEvent($event)"></canvas>
+    <canvas class="gameCanvas" #gameCanvas></canvas>
   </div>  
 </ion-content>
