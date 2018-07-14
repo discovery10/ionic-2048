@@ -65,7 +65,9 @@ export class GamePage {
     this.init();
     this.game_status = true;
     this.storage.get('vibration_status').then(data=>{
-      this.vibration_status = data;
+      if(data!=null) {
+        this.vibration_status = data;
+      }
     });
     this.storage.get('num_data').then(data => {
       if(data) {
