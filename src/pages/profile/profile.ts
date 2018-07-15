@@ -37,4 +37,8 @@ export class ProfilePage {
       this.events.publish('vibration_status:refresh');
     });
   }
+
+  goback():void {
+    this.navCtrl.pop();
+  }
 }
