@@ -15,8 +15,8 @@ export class MyApp {
       // Here you can do any higher level native things you might need.
       if(platform.is('ios')) {
         statusBar.overlaysWebView(false);
+        statusBar.styleDefault();
       }
-      statusBar.styleDefault();
       splashScreen.hide();
     });
   }
