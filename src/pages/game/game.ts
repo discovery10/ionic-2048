@@ -46,6 +46,13 @@ export class GamePage {
 
   constructor(public navCtrl: NavController, public navParams: NavParams, private renderer:Renderer2, private storage:Storage,
     private vibration: Vibration, private alertCtrl:AlertController, private events:Events) {
+      this.events.subscribe('vibration_status:refresh',()=>{
+        this.storage.get('vibration_status').then(data=>{
+          if(data!=null) {
+            this.vibration_status = data;
+          }
+        });
+      });
   }
 
   ionViewDidLoad() {
@@ -74,6 +81,7 @@ export class GamePage {
         this.num_array = data['num_array'] || [];
         this.score = data['score'] || 0;
         this.target_score = data['target_score'] || 2048;
+        this.maxScore = data['max_score'] || 0;
         this.drawGamePanel();
       } else {
         this.startGame();
@@ -85,7 +93,8 @@ export class GamePage {
     this.storage.set('num_data',{
       'num_array' : this.num_array,
       'score' : this.score,
-      'target_score' : this.target_score
+      'target_score' : this.target_score,
+      'max_score' : this.maxScore
     });
   }
 
@@ -655,11 +664,11 @@ export class GamePage {
     //console.log(num);
     if(num>0) {
       this.score+=num;
-      this.saveNumData();
-      this.tipStr = '+'+num;
       if(this.score>this.maxScore) {
         this.maxScore = this.score;
       }
+      this.saveNumData();
+      this.tipStr = '+'+num;
       this.renderer.setStyle(this.tip.nativeElement,'top','-50px');
       this.renderer.setStyle(this.tip.nativeElement,'opacity','0');
       setTimeout(()=>{
@@ -770,17 +779,19 @@ export class GamePage {
           this.target_score = this.target_score*2;
           this.saveNumData();
           this.storage.get('history_scores').then(data=>{
+            var _num_data = {'score':this.score,'num_array':this.num_array,'target_score':this.target_score};
             if(data) {
               var numObj = data.find(n=>n['num']==history_score);
               if(numObj) {
                 numObj['cnt'] = numObj['cnt'] + 1;
+                numObj['data'] = _num_data;
               } else {
-                data.push({'num':history_score,'cnt':1});
+                data.push({'num':history_score,'cnt':1,'data':_num_data});
               }
             } else {
-             data = [{'num':history_score,'cnt':1}]; 
+             data = [{'num':history_score,'cnt':1,'data':_num_data}]; 
             }
-            this.storage.set('history_scores',data).then(()=>this.events.publish('historyRefresh'));
+            this.storage.set('history_scores',data);
           });
           this.alertCtrl.create({
             title : '消息',
@@ -796,23 +807,51 @@ export class GamePage {
   }
 
   newGame():void {
-    this.alertCtrl.create({
-      title : '提示',
-      subTitle : '您是否要重新开始游戏?',
-      buttons : [{
-        text : '否',
-        role : 'cancel'
-      },{
-        text : '是',
-        handler : ()=>{
-          this.score = 0;
-          this.num_array = [];
-          this.target_score = 2048;
-          this.saveNumData();
-          this.startGame();
+    this.storage.get('history_scores').then(data=>{
+      let alert = this.alertCtrl.create();
+      alert.setTitle('请选择起始关卡');
+      alert.addInput({
+        type : 'radio',
+        label : '新游戏',
+        value : '0',
+        checked : true
+      });
+      if(data) {
+        for(let i=0;i<data.length;i++) {
+          alert.addInput({
+            type : 'radio',
+            label :  data[i]['num'],
+            value : data[i]['num']
+          });
         }
-      }]
-    }).present();
+      }
+      alert.addButton('取消');
+      alert.addButton({
+        text : '确定',
+        handler : (num:number)=>{
+          this.game_status = true;
+          if(num==0) {
+            this.score = 0;
+            this.num_array = [];
+            this.target_score = 2048;
+            this.saveNumData();
+            this.startGame();
+          } else {
+            var numObj = data.find(n=>n['num']==num);
+            this.score = numObj['data']['score'];
+            this.num_array = numObj['data']['num_array'];
+            this.target_score = numObj['data']['target_score'];
+            this.saveNumData();
+            this.drawGamePanel();
+          }
+        }
+      });
+      alert.present();
+    });
+  }
+
+  openProfilePage():void {
+    this.navCtrl.push('ProfilePage');
   }
 
 }

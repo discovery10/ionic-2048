@@ -1,9 +1,3 @@
-<ion-header>
-  <ion-navbar>
-    <ion-title>2048小游戏</ion-title>
-  </ion-navbar>
-</ion-header>
-
 <ion-content class="page-content" (touchmove)="$event.preventDefault()"
 (touchstart)="touchstartEvent($event)" (touchend)="touchendEvent($event)">
   <div class="container" #gameContainer>
@@ -19,11 +13,18 @@
             <div class="tip" #tip>{{tipStr}}</div>
           </div>
         </div>
+        <div class="score">
+          <div class="txt">最高</div>
+          <div class="num-div">
+            <div class="num">{{maxScore}}</div>
+          </div>
+        </div>
       </div>
     </div>
     <div class="header-info">
       <div class="info">移动数字直到出到{{target_score}}</div>
-      <button ion-button small color="gamecolor" (click)="newGame()">新游戏</button>
+      <button ion-button small color="gamecolor" (click)="newGame()">重新开始</button>
+      <button ion-button small color="gamecolor" (click)="openProfilePage()">设置</button>
     </div>
     <canvas class="gameCanvas" #gameCanvas></canvas>
   </div>  
