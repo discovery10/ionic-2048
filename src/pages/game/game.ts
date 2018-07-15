@@ -49,7 +49,7 @@ export class GamePage {
   }
 
   ionViewDidLoad() {
-    //console.log('window.screen.width',window.screen.width);
+    //console.log('width:'+window.screen.width+'\theight:'+window.screen.height);
     if(window.screen.width<360) {
       this.box_size = 70;
       this.box_space = 5;
@@ -683,7 +683,7 @@ export class GamePage {
 
     var deltax=this.endx-this.startx;
     var deltay=this.endy-this.starty;
-    var _width = window.screen.width;
+    var _width = 100;//window.screen.width;
     if(Math.abs(deltax)<(0.1*_width) && Math.abs(deltay)<(0.1*_width)){
       return ;
     }
@@ -796,11 +796,23 @@ export class GamePage {
   }
 
   newGame():void {
-    this.score = 0;
-    this.num_array = [];
-    this.target_score = 2048;
-    this.saveNumData();
-    this.startGame();
+    this.alertCtrl.create({
+      title : '提示',
+      subTitle : '您是否要重新开始游戏?',
+      buttons : [{
+        text : '否',
+        role : 'cancel'
+      },{
+        text : '是',
+        handler : ()=>{
+          this.score = 0;
+          this.num_array = [];
+          this.target_score = 2048;
+          this.saveNumData();
+          this.startGame();
+        }
+      }]
+    }).present();
   }
 
 }
